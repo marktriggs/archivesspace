@@ -21,7 +21,6 @@ before_script:
   - sleep 3 
   - build/run bootstrap
 
-
 branches:
   except:
     - gh-pages
@@ -30,7 +29,7 @@ script:
   - build/run backend:test
   - build/run backend:integration
 # - build/run common:test  # https://github.com/hudmol/archivesspace/commit/193fe9a3990da74e37e98140c9eaa264ec801643#L0R106
-  - build/run dist
+  # - build/run dist
   - build/run selenium:test
 
 notifications:
