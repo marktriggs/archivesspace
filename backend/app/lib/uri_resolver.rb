@@ -10,8 +10,23 @@ module URIResolver
       @to_resolve = []
       @env = env
 
+      # TODO: Pull this out
+      # Allow each property we resolve to have some options that will guide how it gets resolved.
+      @property_options = {}
+
       if properties_to_resolve.is_a?(Array)
-        @properties = properties_to_resolve
+        @properties = properties_to_resolve.map {|properties_subarray|
+          if properties_subarray.first =~ /(.+)\[(.+)\]/
+            property = $1
+            @property_options[property] ||= {}
+            @property_options[property].merge!(Hash[$2.split(/[=,]/).each_slice(2).to_a])
+
+            [property] + properties_subarray.drop(1)
+          else
+            @property_options[properties_subarray.first] ||= {}
+            properties_subarray
+          end
+        }
       else
         raise ":all not implemented yet"
       end
@@ -78,6 +93,7 @@ module URIResolver
       matching_properties.each do |properties|
         @to_resolve << {
           :ref => ref,
+          :property => properties.first,
           :after_resolve => proc {
             if properties.length > 1
               self.class.new([properties.drop(1)], env).resolve_references(ref['_resolved'], false)
@@ -108,12 +124,14 @@ module URIResolver
         repo_id = parsed[:repository] ? JSONModel(:repository).id_for(parsed[:repository]) : nil
 
         model = find_model_by_jsonmodel_type(parsed[:type])
+        resolver = @property_options.fetch(request[:property], {}).fetch('mode', 'default')
 
         grouped[model] ||= {}
-        grouped[model][repo_id] ||= []
+        grouped[model][repo_id] ||= {}
+        grouped[model][repo_id][resolver] ||= []
 
         request[:id] = parsed[:id]
-        grouped[model][repo_id] << request
+        grouped[model][repo_id][resolver] << request
       end
 
       # Turn the requests into a flat structure like:
@@ -122,8 +140,10 @@ module URIResolver
       #
       result = []
       grouped.each do |model, repo_requests|
-        repo_requests.each do |repo_id, requests|
-          result << [model, repo_id, requests]
+        repo_requests.each do |repo_id, resolver_requests|
+          resolver_requests.each do |resolver, requests|
+            result << [model, repo_id, resolver, requests]
+          end
         end
       end
 
@@ -131,8 +151,52 @@ module URIResolver
     end
 
 
+    class DefaultResolver
+
+      def call(model, objs)
+        model.sequel_to_jsonmodel(objs).map {|obj|
+          obj.to_hash(:trusted)
+        }
+      end
+
+    end
+
+
+    class AgentResolver
+
+      def call(model, objs)
+        link_column = model.association_reflection(model.my_agent_type[:name_type])[:key]
+
+        names = {}
+        model.my_agent_type[:name_model].filter(:is_display_name => 1,
+                                                link_column => objs.map(&:id))
+          .select(link_column, :sort_name).each do |row|
+          names[row[link_column]] = row[:sort_name]
+        end
+
+        objs.map {|obj|
+          record = obj.values
+          record[:title] = names.fetch(obj.id)
+          record
+        }
+      end
+
+    end
+
+
+    RESOLVERS = {
+      'default' => DefaultResolver,
+      'agent' => AgentResolver,
+    }
+
+
+    def get_resolver(resolver_type)
+      RESOLVERS.fetch(resolver_type).new
+    end
+
+
     def resolve_and_insert_refs!
-      group_resolve_requests(@to_resolve).each do |model, repo_id, requests|
+      group_resolve_requests(@to_resolve).each do |model, repo_id, resolver, requests|
         if model
           RequestContext.open(:repo_id => repo_id) do
             id_to_request = {}
@@ -142,12 +206,12 @@ module URIResolver
             end
 
             objs = model.filter(:id => id_to_request.keys).all
-            jsons = model.sequel_to_jsonmodel(objs)
+            jsons = get_resolver(resolver).call(model, objs)
 
             objs.zip(jsons).each do |obj, json|
               requests = id_to_request[obj.id]
               requests.each do |request|
-                request[:ref]['_resolved'] ||= json.to_hash(:trusted)
+                request[:ref]['_resolved'] ||= json
                 request[:after_resolve].call
               end
             end
