@@ -27,6 +27,7 @@ class MARCModel < ASpaceExport::ExportModel
     :ead_location => :handle_ead_loc
   }
 
+  attr_reader :aspace_record
   attr_accessor :leader_string
   attr_accessor :controlfield_string
 
@@ -72,8 +73,14 @@ class MARCModel < ASpaceExport::ExportModel
     end
   end
 
-  def initialize
+  def initialize(obj)
     @datafields = {}
+    @aspace_record = obj
+  end
+
+  # Present to allow plugins to define their own
+  def controlfields
+    []
   end
 
   def datafields
@@ -82,7 +89,7 @@ class MARCModel < ASpaceExport::ExportModel
 
 
   def self.from_aspace_object(obj)
-    self.new
+    self.new(obj)
   end
 
   # 'archival object's in the abstract
@@ -117,7 +124,7 @@ class MARCModel < ASpaceExport::ExportModel
     string += date['end'] ? date['end'][0..3] : "    "
     string += "xx"
     18.times { string += ' ' }
-    string += obj.language
+    string += obj.language || '|||'
     string += ' d'
 
     string

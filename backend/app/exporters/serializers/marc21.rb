@@ -1,6 +1,20 @@
 class MARCSerializer < ASpaceExport::Serializer 
   serializer_for :marc21
 
+  # Allow plugins to wrap the MARC record with their own behavior.  Gives them
+  # the chance to change the leader, 008, add extra data fields, etc.
+  def self.add_decorator(decorator)
+    @decorators ||= []
+    @decorators << decorator
+  end
+
+  def self.decorate_record(record)
+    Array(@decorators).reduce(record) {|result, decorator|
+      decorator.new(result)
+    }
+  end
+
+
   def build(marc, opts = {})
 
     builder = Nokogiri::XML::Builder.new(:encoding => "UTF-8") do |xml|
@@ -13,7 +27,7 @@ class MARCSerializer < ASpaceExport::Serializer
 
   def serialize(marc, opts = {})
 
-    builder = build(marc, opts)
+    builder = build(MARCSerializer.decorate_record(marc), opts)
 
     builder.to_xml
   end
@@ -36,6 +50,12 @@ class MARCSerializer < ASpaceExport::Serializer
         xml.controlfield(:tag => '008') {
          xml.text marc.controlfield_string
         }
+
+        marc.controlfields.each do |cf|
+          xml.controlfield(:tag => cf.tag) {
+            xml.cdata cf.text
+          }
+        end
 
         marc.datafields.each do |df|
 
