@@ -25,8 +25,8 @@ class ReportResponse
       String.from_java_bytes( @report.render(format.to_sym, @params) ) 
     else
       file = File.join( File.dirname(__FILE__), "../../views/reports/report.erb")
-      @params[:html_report] ||= proc { ReportErbRenderer.new(@report).render(file) }
-    
+      @params[:html_report] ||= proc { ReportErbRenderer.new(@report, @params).render(file) }
+
       format = @report.format
 
       klass = Object.const_get("#{format.upcase}Response")
@@ -37,8 +37,13 @@ class ReportResponse
 end
 
 class ReportErbRenderer
-  def initialize(report)
+  def initialize(report, params)
     @report = report
+    @params = params
+  end
+
+  def layout?
+    @params.fetch(:layout, true)
   end
 
   def render(file)
@@ -57,10 +62,24 @@ class ReportErbRenderer
     end
   end
 
+  def format_boolean(boolean)
+    if boolean
+      "Yes"
+    else
+      "No"
+    end
+  end
+
   def format_number(number)
     unless number.nil?
       number.to_s('.2F')
     end
+  end
+
+  def insert_subreport(subreport, params)
+    report_model = Kernel.const_get(subreport)
+    ReportResponse.new(report_model.new(params.merge(:format => 'html'), @report.job, @report.db),
+                       :layout => false).generate
   end
 
   def transform_text(s)

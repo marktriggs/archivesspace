@@ -7,6 +7,7 @@ class AbstractReport
   attr_accessor :format
   attr_accessor :params
   attr_accessor :db
+  attr_reader :job
 
   def initialize(params, job, db)
     # sanity check, please. 
@@ -28,6 +29,10 @@ class AbstractReport
 
   def report
     self
+  end
+
+  def headers
+    query.columns.map(&:to_s)
   end
 
   def template
