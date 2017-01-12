@@ -45,6 +45,24 @@ class ReportErbRenderer
     ERB.new( File.read(file) ).result(binding)
   end
 
+  def format_4part(s)
+    unless s.nil?
+      ASUtils.json_parse(s).compact.join('.')
+    end
+  end
+
+  def format_date(date)
+    unless date.nil?
+      date.to_s
+    end
+  end
+
+  def format_number(number)
+    unless number.nil?
+      number.to_s('.2F')
+    end
+  end
+
   def transform_text(s)
     # The HTML to PDF library doesn't currently support the "break-word" CSS
     # property that would let us force a linebreak for long strings and URIs.
