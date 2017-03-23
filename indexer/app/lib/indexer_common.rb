@@ -253,22 +253,6 @@ class CommonIndexer
   HARDCODED_ENUM_FIELDS = ["relator", "type", "role", "source", "rules", "acquisition_type", "resource_type", "processing_priority", "processing_status", "era", "calendar", "digital_object_type", "level", "processing_total_extent_type", "container_extent_type", "extent_type", "event_type", "type_1", "type_2", "type_3", "salutation", "outcome", "finding_aid_description_rules", "finding_aid_status", "instance_type", "use_statement", "checksum_method", "language", "date_type", "label", "certainty", "scope", "portion", "xlink_actuate_attribute", "xlink_show_attribute", "file_format_name", "temporary", "name_order", "country", "jurisdiction", "rights_type", "ip_status", "term_type", "enum_1", "enum_2", "enum_3", "enum_4", "relator_type", "job_type"]
 
   def configure_doc_rules
-
-    add_delete_hook { |records, delete_request|
-      records.each do |rec|
-        if rec.include?("_collection_management")
-          delete_request[:delete] ||= []
-          delete_request[:delete] <<  {"id" => rec}
-          delete_request[:delete] <<  {'query' => "parent_id:\"#{rec.split("#").first}\""}
-        end
-
-        if rec.match(/repositories\/\d+\/collection_management\//)
-          delete_request[:delete] << {'query' => "cm_uri:\"#{rec}\""}
-        end
-      end
-     }
-
-
     add_document_prepare_hook {|doc, record|
       found_keys = Set.new
 
