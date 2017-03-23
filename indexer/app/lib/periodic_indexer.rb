@@ -213,7 +213,7 @@ class PeriodicIndexer < CommonIndexer
     # Give subclasses a place to hang custom behavior.
   end
 
-  def handle_deletes
+  def handle_deletes(opts = {})
     start = Time.now
     last_mtime = @state.get_last_mtime('_deletes', 'deletes')
     did_something = false
@@ -224,9 +224,14 @@ class PeriodicIndexer < CommonIndexer
 
       if !deletes['results'].empty?
         did_something = true
+
+        # deletes['results']
+        require 'pp';$stderr.puts("\n*** DEBUG #{(Time.now.to_f * 1000).to_i} [periodic_indexer.rb:229 a3a95]: " + {%Q^deletes['results']^ => deletes['results']}.pretty_inspect + "\n")
       end
 
-      delete_records(deletes['results'])
+      log("Got #{deletes['results'].length} deletes")
+
+      delete_records(deletes['results'], opts)
 
       break if deletes['last_page'] <= page
 

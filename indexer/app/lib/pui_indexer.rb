@@ -101,7 +101,7 @@ class PUIIndexer < PeriodicIndexer
 
       batch << {
         'id' => "#{resource_uri}/ordered_records",
-        'parent_id' => resource_uri,
+        'pui_parent_id' => resource_uri,
         'publish' => "true",
         'primary_type' => "resource_ordered_records",
         'json' => ASUtils.to_json(json)
@@ -131,7 +131,7 @@ class PUIIndexer < PeriodicIndexer
 
         batch << {
           'id' => "#{node_uri}/tree/root",
-          'parent_id' => node_uri,
+          'pui_parent_id' => node_uri,
           'publish' => "true",
           'primary_type' => "tree_root",
           'json' => ASUtils.to_json(json)
@@ -153,7 +153,7 @@ class PUIIndexer < PeriodicIndexer
 
         batch << {
           'id' => "#{root_record_uri}/tree/waypoint_#{parent_uri}_#{waypoint_number}",
-          'parent_id' => (parent_uri || root_record_uri),
+          'pui_parent_id' => (parent_uri || root_record_uri),
           'publish' => "true",
           'primary_type' => "tree_waypoint",
           'json' => ASUtils.to_json(json)
@@ -181,7 +181,7 @@ class PUIIndexer < PeriodicIndexer
 
         batch << {
           'id' => "#{root_record_uri}/tree/node_#{json.fetch('uri')}",
-          'parent_id' => json.fetch('uri'),
+          'pui_parent_id' => json.fetch('uri'),
           'publish' => "true",
           'primary_type' => "tree_node",
           'json' => ASUtils.to_json(json)
@@ -203,7 +203,7 @@ class PUIIndexer < PeriodicIndexer
         node_paths.each do |node_id, path|
           batch << {
             'id' => "#{root_uri}/tree/node_from_root_#{node_id}",
-            'parent_id' => node_id_to_uri.fetch(Integer(node_id)),
+            'pui_parent_id' => node_id_to_uri.fetch(Integer(node_id)),
             'publish' => "true",
             'primary_type' => "tree_node_from_root",
             'json' => ASUtils.to_json({node_id => path})
@@ -269,9 +269,13 @@ class PUIIndexer < PeriodicIndexer
     if batch.length > 0
       log "Indexed #{batch.length} additional PUI records in repository #{repository.repo_code}"
 
-      index_batch(batch)
+      index_batch(batch, nil, :parent_id_field => 'pui_parent_id')
       send_commit
     end
+
+    puts "doing some deletes"
+    handle_deletes(:parent_id_field => 'pui_parent_id')
+
 
     checkpoints.each do |repository, type, start|
       @state.set_last_mtime(repository.id, type, start)
