@@ -867,3 +867,9 @@ AppConfig[:bulk_archival_object_updater_max_rows] = 1000
 # Default search scope setting
 # Options: 'all_record_types', 'collections_only'
 AppConfig[:search_default_scope] = 'all_record_types'
+
+AppConfig[:extended_csv_export_enabled] = false
+AppConfig[:extended_csv_export_class] = 'ExtendedCSVExportStream'
+AppConfig[:extended_csv_export_extra_nested_records] = []
+AppConfig[:extended_csv_export_extra_excluded_properties] = []
+AppConfig[:extended_csv_export_max_nested_records] = 10
