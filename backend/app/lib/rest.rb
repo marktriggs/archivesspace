@@ -327,55 +327,72 @@ module RESTHelpers
 
 
           RequestContext.open(request_context) do
+            Thread.current[:_original_request_body] = nil
+
             DB.open do |db|
               ensure_params(rp, paginated, paged)
             end
 
-            Log.debug("Post-processed params: #{Log.filter_passwords(params).inspect}")
+            begin
+              Log.debug("Post-processed params: #{Log.filter_passwords(params).inspect}")
 
-            RequestContext.put(:repo_id, params[:repo_id])
-            RequestContext.put(:is_high_priority, high_priority_request?)
+              RequestContext.put(:repo_id, params[:repo_id])
+              RequestContext.put(:is_high_priority, high_priority_request?)
 
-            if Endpoint.is_toplevel_request?(env) || Endpoint.is_potentially_destructive_request?(env)
-              unless preconditions.all? { |precondition| self.instance_eval &precondition }
-                raise AccessDeniedException.new("Access denied")
-              end
-            end
-
-            use_transaction = (use_transaction == :unspecified) ? true : use_transaction
-            db_opts = {}
-
-            if use_transaction
-              if methods == [:post]
-                # Pure POST requests use read committed so that tree position
-                # updates can be retried with a chance of succeeding (i.e. we
-                # can read the last committed value when determining our
-                # position)
-                db_opts[:isolation_level] = :committed
-              else
-                # Anything that might be querying the DB will get repeatable read.
-                db_opts[:isolation_level] = :repeatable
-              end
-            end
-
-            DB.open(use_transaction, db_opts) do
-              RequestContext.put(:current_username, current_user.username)
-              # If the current user is a manager, show them suppressed records
-              # too.
-              if RequestContext.get(:repo_id)
-                if current_user.can?(:index_system)
-                  # Don't mess with the search user
-                  RequestContext.put(:enforce_suppression, false)
-                else
-                  RequestContext.put(:enforce_suppression,
-                                     !((current_user.can?(:manage_repository) ||
-                                        current_user.can?(:view_suppressed) ||
-                                        current_user.can?(:suppress_archival_record)) &&
-                                       Preference.defaults['show_suppressed']))
+              if Endpoint.is_toplevel_request?(env) || Endpoint.is_potentially_destructive_request?(env)
+                unless preconditions.all? { |precondition| self.instance_eval &precondition }
+                  raise AccessDeniedException.new("Access denied")
                 end
               end
 
-              self.instance_eval &block
+              use_transaction = (use_transaction == :unspecified) ? true : use_transaction
+              db_opts = {}
+
+              if use_transaction
+                if methods == [:post]
+                  # Pure POST requests use read committed so that tree position
+                  # updates can be retried with a chance of succeeding (i.e. we
+                  # can read the last committed value when determining our
+                  # position)
+                  db_opts[:isolation_level] = :committed
+                else
+                  # Anything that might be querying the DB will get repeatable read.
+                  db_opts[:isolation_level] = :repeatable
+                end
+              end
+
+              retry_count = -1
+
+              DB.open(use_transaction, db_opts) do
+                retry_count += 1
+
+                RequestContext.put(:current_username, current_user.username)
+                # If the current user is a manager, show them suppressed records
+                # too.
+                if RequestContext.get(:repo_id)
+                  if current_user.can?(:index_system)
+                    # Don't mess with the search user
+                    RequestContext.put(:enforce_suppression, false)
+                  else
+                    RequestContext.put(:enforce_suppression,
+                                       !((current_user.can?(:manage_repository) ||
+                                          current_user.can?(:view_suppressed) ||
+                                          current_user.can?(:suppress_archival_record)) &&
+                                         Preference.defaults['show_suppressed']))
+                  end
+                end
+
+                if retry_count > 0
+                  # Re-initialize our parameters for this retry.  The main goal here is to reload
+                  # any incoming JSON from the original state, to clear any modifications that
+                  # might have been made during the previous attempt.
+                  ensure_params(rp, paginated, paged)
+                end
+
+                self.instance_eval &block
+              end
+            ensure
+              Thread.current[:_original_request_body] = nil
             end
           end
         end
@@ -567,7 +584,11 @@ module RESTHelpers
           known_params[name] = true
 
           if opts[:body]
-            params[name] = request.body.read
+            unless Thread.current[:_original_request_body]
+              Thread.current[:_original_request_body] = request.body.read
+            end
+
+            params[name] = Thread.current[:_original_request_body]
           elsif type == :body_stream
             params[name] = request.body
           end
