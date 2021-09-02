@@ -187,7 +187,7 @@ class DB
         end
 
         last_err = false
-        retries = opts[:retries] || 10
+        retries = opts[:retries] || 20
 
         retries.times do |attempt|
           begin

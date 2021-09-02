@@ -48,7 +48,6 @@
   -->
   <property name="env.JAVA_OPTS" value="" />
   <!-- Setup defaults for MySQL and Solr dev / test environment -->
-  <property name="env.APPCONFIG_DB_URL" value="jdbc:derby:${aspace.data_directory.dev}/archivesspace_demo_db;create=true;aspacedemo=true" />
   <property name="env.APPCONFIG_SOLR_URL" value="${aspace.solr.url}" />
   <property name="env.ASPACE_TEST_DB_URL" value="jdbc:derby:${aspace.data_directory.test}/archivesspace_demo_db;create=true;aspacedemo=true" />
   <property name="env.ASPACE_TEST_SOLR_URL" value="${aspace.solr.url}" />
@@ -112,7 +111,6 @@
         <env key="ASPACE_INTEGRATION" value="${aspace.integration}" />
         <env key="JRUBY_OPTS" value="--debug" />
         <env key="APPCONFIG_DATA_DIRECTORY" value="${aspace.data_directory.dev}" />
-        <env key="APPCONFIG_DB_URL" value="${env.APPCONFIG_DB_URL}" />
         <env key="APPCONFIG_SOLR_URL" value="${env.APPCONFIG_SOLR_URL}" />
         <arg line="app/main.rb ${aspace.backend.port}" />
       </java>
@@ -140,7 +138,6 @@
       <env key="BUNDLE_PATH" value="${gem_home}" />
       <env key="COVERAGE_REPORTS" value="${COVERAGE_REPORTS}" />
       <env key="APPCONFIG_DATA_DIRECTORY" value="${aspace.data_directory.test}" />
-      <env key="APPCONFIG_DB_URL" value="${env.ASPACE_TEST_DB_URL}" />
       <env key="APPCONFIG_SOLR_URL" value="${env.ASPACE_TEST_SOLR_URL}" />
       <arg line="tests/integration.rb" />
     </java>
@@ -178,7 +175,6 @@
       <env key="BUNDLE_PATH" value="${gem_home}" />
       <env key="COVERAGE_REPORTS" value="${COVERAGE_REPORTS}" />
       <env key="APPCONFIG_DATA_DIRECTORY" value="${aspace.data_directory.test}" />
-      <env key="APPCONFIG_DB_URL" value="${env.ASPACE_TEST_DB_URL}" />
       <env key="APPCONFIG_SOLR_URL" value="${env.ASPACE_TEST_SOLR_URL}" />
       <arg line="-X-C ../build/${jruby_build_bin_path}/rspec -b --format d -P '*_spec.rb' --order rand:1 ${example-arg} ${plugin-spec-dirs}" />
     </java>
@@ -479,7 +475,6 @@
       <env key="GEM_PATH" value="" />
       <env key="BUNDLE_PATH" value="${gem_home}" />
       <env key="APPCONFIG_DATA_DIRECTORY" value="${aspace.data_directory.test}" />
-      <env key="APPCONFIG_DB_URL" value="${env.ASPACE_TEST_DB_URL}" />
       <env key="APPCONFIG_SOLR_URL" value="${env.ASPACE_TEST_SOLR_URL}" />
       <arg line="../build/${jruby_build_bin_path}/rspec -b --format d ${pattern-arg} ${tag-arg} ${order-arg} ${example-arg} ${spec-arg} ${extra-spec-paths}" />
     </java>
@@ -522,7 +517,6 @@
       <env key="GEM_HOME" value="${gem_home}" />
       <env key="GEM_PATH" value="" />
       <env key="BUNDLE_PATH" value="${gem_home}" />
-      <env key="APPCONFIG_DB_URL" value="${env.APPCONFIG_DB_URL}" />
       <arg line="-Iapp/lib ../build/scripts/migrate_db.rb" />
     </java>
   </target>
@@ -533,7 +527,6 @@
       <env key="GEM_HOME" value="${gem_home}" />
       <env key="GEM_PATH" value="" />
       <env key="BUNDLE_PATH" value="${gem_home}" />
-      <env key="APPCONFIG_DB_URL" value="${env.ASPACE_TEST_DB_URL}" />
       <arg line="-Iapp/lib ../build/scripts/migrate_db.rb" />
     </java>
   </target>
@@ -545,7 +538,6 @@
       <env key="GEM_HOME" value="${gem_home}" />
       <env key="GEM_PATH" value="" />
       <env key="BUNDLE_PATH" value="${gem_home}" />
-      <env key="APPCONFIG_DB_URL" value="${env.APPCONFIG_DB_URL}" />
       <arg line="-Iapp/lib ../build/scripts/migrate_db.rb nuke" />
     </java>
   </target>
@@ -557,7 +549,6 @@
       <env key="GEM_HOME" value="${gem_home}" />
       <env key="GEM_PATH" value="" />
       <env key="BUNDLE_PATH" value="${gem_home}" />
-      <env key="APPCONFIG_DB_URL" value="${env.ASPACE_TEST_DB_URL}" />
       <arg line="-Iapp/lib ../build/scripts/migrate_db.rb nuke" />
     </java>
   </target>
@@ -607,7 +598,6 @@
       <env key="GEM_PATH" value="" />
       <env key="BUNDLE_PATH" value="${gem_home}" />
       <env key="APPCONFIG_DATA_DIRECTORY" value="${aspace.data_directory.dev}" />
-      <env key="APPCONFIG_DB_URL" value="${env.APPCONFIG_DB_URL}" />
       <env key="APPCONFIG_SOLR_URL" value="${env.APPCONFIG_SOLR_URL}" />
       <arg line="app/main.rb" />
     </java>
@@ -632,7 +622,6 @@
       <env key="BUNDLE_PATH" value="${gem_home}" />
       <env key="COVERAGE_REPORTS" value="${COVERAGE_REPORTS}" />
       <env key="APPCONFIG_DATA_DIRECTORY" value="${aspace.data_directory.test}" />
-      <env key="APPCONFIG_DB_URL" value="${env.ASPACE_TEST_DB_URL}" />
       <env key="APPCONFIG_SOLR_URL" value="${env.ASPACE_TEST_SOLR_URL}" />
       <arg line="../build/${jruby_build_bin_path}/rspec -b --format d -P '*_spec.rb' --order rand:1 ${example-arg} spec/${spec}" />
     </java>
@@ -708,7 +697,6 @@
       <env key="JRUBY_OPTS" value="--debug" />
       <env key="ASPACE_INTEGRATION" value="${aspace.integration}" />
       <env key="APPCONFIG_DATA_DIRECTORY" value="${aspace.data_directory.dev}" />
-      <env key="APPCONFIG_DB_URL" value="${env.APPCONFIG_DB_URL}" />
       <env key="APPCONFIG_SOLR_URL" value="${env.APPCONFIG_SOLR_URL}" />
       <arg line="script/rails s mizuno -b 0.0.0.0 --port=${aspace.frontend.port}" />
     </java>
@@ -753,7 +741,6 @@
       <env key="GEM_PATH" value="" />
       <env key="BUNDLE_PATH" value="${gem_home}" />
       <env key="APPCONFIG_DATA_DIRECTORY" value="${aspace.data_directory.test}" />
-      <env key="APPCONFIG_DB_URL" value="${env.ASPACE_TEST_DB_URL}" />
       <env key="APPCONFIG_SOLR_URL" value="${env.ASPACE_TEST_SOLR_URL}" />
       <arg line="../build/${jruby_build_bin_path}/rspec -b --format d -P '*_spec.rb' --order rand:1 ${example-arg} ${plugin-spec-dirs}" />
     </java>
@@ -821,7 +808,6 @@
       <env key="BUNDLE_PATH" value="${gem_home}" />
       <env key="ASPACE_INTEGRATION" value="${aspace.integration}" />
       <env key="APPCONFIG_DATA_DIRECTORY" value="${aspace.data_directory.dev}" />
-      <env key="APPCONFIG_DB_URL" value="${env.APPCONFIG_DB_URL}" />
       <env key="APPCONFIG_SOLR_URL" value="${env.APPCONFIG_SOLR_URL}" />
       <arg line="bin/rails s mizuno -b 0.0.0.0 --port=${aspace.public.port}" />
     </java>

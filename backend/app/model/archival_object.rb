@@ -39,7 +39,7 @@ class ArchivalObject < Sequel::Model(:archival_object)
 
   auto_generate :property => :ref_id,
                 :generator => proc { |json|
-                  SecureRandom.hex
+                   Sequence.get("CHAOS_AO_SEQUENCE").to_s
                 },
                 :only_on_create => true
 

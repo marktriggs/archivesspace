@@ -351,6 +351,24 @@ module ASModel
       # Create a new record instance from the JSONModel 'json'.  Also creates any
       # nested record instances that it contains.
       def create_from_json(json, extra_values = {})
+
+        if self == ArchivalObject
+          unless RequestContext.get(:chaos_mode)
+            RequestContext.put(:chaos_mode, true)
+            RequestContext.put(:chaotic_retries, rand(5))
+          end
+
+          if RequestContext.get(:chaotic_retries) > 0
+            # "Another chaotic retry"
+            require 'pp';$stderr.puts("\n*** @DEBUG #{(Time.now.to_f * 1000).to_i} [ASModel_crud.rb:364 ExcitedWhippet]: " + {%Q^"Another chaotic retry"^ => "Another chaotic retry"}.pretty_inspect + "\n")
+
+            RequestContext.put(:chaotic_retries, RequestContext.get(:chaotic_retries) - 1)
+
+            # Retriable rollback kind of thing
+            raise java.sql.SQLException.new(com.mysql.jdbc.exceptions.jdbc4.MySQLTransactionRollbackException.new("CHAOS", "400", 666))
+          end
+        end
+
         self.strict_param_setting = false
         values = ASUtils.keys_as_strings(extra_values)
 

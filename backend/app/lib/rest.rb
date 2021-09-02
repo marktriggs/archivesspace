@@ -383,6 +383,9 @@ module RESTHelpers
                 end
 
                 if retry_count > 0
+                  # "RESETTING"
+                  require 'pp';$stderr.puts("\n*** @DEBUG #{(Time.now.to_f * 1000).to_i} [rest.rb:388 WickedLocust]: " + {%Q^"RESETTING"^ => "RESETTING"}.pretty_inspect + "\n")
+
                   # Re-initialize our parameters for this retry.  The main goal here is to reload
                   # any incoming JSON from the original state, to clear any modifications that
                   # might have been made during the previous attempt.
